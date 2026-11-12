@@ -1,0 +1,507 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Thời khóa biểu</title>
+<style>
+:root{
+  --bg:#f6f7fb; --card:#fff; --text:#1f2430; --muted:#7b8294; --line:#e6e8ef;
+  --accent:#4f6df5; --danger:#e5484d; --h:56px;
+}
+@media (prefers-color-scheme:dark){
+  :root{--bg:#14161c;--card:#1c1f27;--text:#e8eaf0;--muted:#8b93a7;--line:#2a2e39;}
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--text)}
+header{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;padding:14px 20px;position:sticky;top:0;background:var(--bg);z-index:30;border-bottom:1px solid var(--line)}
+h1{font-size:20px;margin:0;display:flex;align-items:center;gap:10px}
+.dot{width:9px;height:9px;border-radius:50%;background:#bbb;display:inline-block}
+.dot.ok{background:#2fb344}.dot.err{background:var(--danger)}
+.status{font-size:12px;color:var(--muted);font-weight:400}
+.actions{display:flex;flex-wrap:wrap;gap:8px}
+button{font:inherit;cursor:pointer;border:1px solid var(--line);background:var(--card);color:var(--text);padding:8px 14px;border-radius:10px;transition:.15s}
+button:hover{border-color:var(--accent)}
+button.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+button.danger{color:var(--danger)}
+button.danger:hover{border-color:var(--danger)}
+button.danger.solid{background:var(--danger);color:#fff;border-color:var(--danger)}
+main{padding:16px 20px 40px;overflow-x:auto}
+.tt{min-width:860px;background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.head,.body{display:grid;grid-template-columns:56px repeat(7,1fr)}
+.head{border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--card)}
+.head div{padding:10px 6px;text-align:center;font-weight:600;font-size:14px}
+.head div small{display:block;color:var(--muted);font-weight:400;font-size:11px}
+.head .today{color:var(--accent)}
+.times{position:relative;height:calc(var(--h)*16)}
+.times span{position:absolute;right:8px;transform:translateY(-50%);font-size:11px;color:var(--muted)}
+.times span:first-child{transform:none;top:2px!important}
+.col{position:relative;height:calc(var(--h)*16);border-left:1px solid var(--line);
+  background-image:linear-gradient(var(--line) 1px,transparent 1px);background-size:100% var(--h);cursor:cell}
+.col.today{background-color:color-mix(in srgb,var(--accent) 5%,transparent)}
+.ev{position:absolute;border-radius:8px;padding:4px 7px;font-size:12px;line-height:1.3;color:#fff;overflow:hidden;cursor:pointer;
+  box-shadow:0 1px 3px rgba(0,0,0,.18);border-left:4px solid rgba(0,0,0,.25)}
+.ev:hover{filter:brightness(1.08);z-index:5}
+.ev b{display:block;font-size:12.5px}
+.ev .t{opacity:.92;font-size:11px}
+.now{position:absolute;left:0;right:0;height:2px;background:var(--danger);z-index:4;pointer-events:none}
+.now::before{content:"";position:absolute;left:-4px;top:-3px;width:8px;height:8px;border-radius:50%;background:var(--danger)}
+.empty{text-align:center;color:var(--muted);padding:24px;font-size:14px}
+dialog{border:none;border-radius:16px;padding:0;width:min(460px,92vw);background:var(--card);color:var(--text);box-shadow:0 20px 60px rgba(0,0,0,.35)}
+dialog::backdrop{background:rgba(0,0,0,.45)}
+.dlg{padding:20px;display:flex;flex-direction:column;gap:12px}
+.dlg h2{margin:0 0 4px;font-size:18px}
+label{font-size:12px;color:var(--muted);display:flex;flex-direction:column;gap:4px}
+input,select,textarea{font:inherit;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--text)}
+textarea{min-height:130px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px;resize:vertical}
+.row{display:flex;gap:10px}.row>*{flex:1}
+.btns{display:flex;gap:8px;justify-content:flex-end;margin-top:6px}
+.btns .sp{margin-right:auto}
+.swatches{display:flex;gap:6px;flex-wrap:wrap}
+.sw{width:24px;height:24px;border-radius:50%;border:2px solid transparent;padding:0;cursor:pointer}
+.sw.sel{border-color:var(--text)}
+.hint{font-size:12px;color:var(--muted);line-height:1.5}
+.hint code{background:var(--bg);padding:1px 5px;border-radius:4px}
+#toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(80px);background:#222;color:#fff;padding:10px 18px;border-radius:10px;font-size:14px;transition:.25s;z-index:99;opacity:0}
+#toast.show{transform:translateX(-50%);opacity:1}
+.radios{display:flex;gap:16px;font-size:13px;color:var(--text)}
+.radios label{flex-direction:row;align-items:center;gap:6px;color:var(--text);font-size:13px}
+table{border-collapse:collapse;width:100%;font-size:12.5px}
+th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);white-space:nowrap}
+th{position:sticky;top:0;background:var(--card);color:var(--muted);font-weight:600}
+tr.me td{background:color-mix(in srgb,var(--accent) 8%,transparent)}
+</style>
+</head>
+<body>
+<header>
+  <h1>📅 Thời khóa biểu <span class="status"><span id="dot" class="dot"></span> <span id="stat">Chưa kết nối</span></span></h1>
+  <div class="actions">
+    <button class="primary" id="bAdd">+ Thêm</button>
+    <button id="bImport">⬆ Nhập JSON</button>
+    <button id="bExport">⬇ Xuất JSON</button>
+    <button class="danger" id="bClear">🗑 Xóa toàn bộ</button>
+    <button id="bCfg" title="Cấu hình Firebase">⚙</button>
+  </div>
+</header>
+
+<main>
+  <div class="tt">
+    <div class="head" id="head"></div>
+    <div class="body" id="body"></div>
+  </div>
+  <div class="empty" id="empty" hidden>Chưa có lịch nào. Bấm “+ Thêm”, hoặc nhập file JSON.</div>
+</main>
+
+<!-- Dialog: sự kiện -->
+<dialog id="dEv"><form method="dialog" class="dlg" id="fEv">
+  <h2 id="evTitle">Thêm lịch</h2>
+  <label>Tên môn / hoạt động<input id="fTitle" required maxlength="80"></label>
+  <label>Thứ<select id="fDay"></select></label>
+  <div class="row">
+    <label>Bắt đầu<input type="time" id="fStart" min="06:00" max="22:00" step="300" required></label>
+    <label>Kết thúc<input type="time" id="fEnd" min="06:00" max="22:00" step="300" required></label>
+  </div>
+  <label>Địa điểm / phòng<input id="fLoc" maxlength="60"></label>
+  <label>Ghi chú<input id="fNote" maxlength="120"></label>
+  <label>Màu<div class="swatches" id="swatches"></div></label>
+  <div class="btns">
+    <button type="button" class="danger sp" id="bDel" hidden>Xóa</button>
+    <button type="button" id="bEvCancel">Hủy</button>
+    <button type="submit" class="primary">Lưu</button>
+  </div>
+</form></dialog>
+
+<!-- Dialog: nhập JSON -->
+<dialog id="dImp"><div class="dlg">
+  <h2>Nhập JSON</h2>
+  <input type="file" id="fFile" accept=".json,application/json">
+  <textarea id="fText" placeholder='Hoặc dán JSON vào đây…'></textarea>
+  <div class="radios">
+    <label><input type="radio" name="mode" value="replace" checked> Thay thế toàn bộ</label>
+    <label><input type="radio" name="mode" value="append"> Thêm vào lịch hiện có</label>
+  </div>
+  <div class="hint">
+    Định dạng: <code>{"events":[{"title":"Toán","day":2,"start":"07:00","end":"08:30","location":"A101","note":"","color":"#4f6df5"}]}</code><br>
+    <code>day</code>: 2 = Thứ 2 … 7 = Thứ 7, 8 hoặc "CN" = Chủ nhật. Giờ từ 06:00 đến 22:00. <code>location</code>, <code>note</code>, <code>color</code> không bắt buộc.
+  </div>
+  <div class="btns">
+    <button type="button" id="bImpCancel">Hủy</button>
+    <button type="button" class="primary" id="bImpGo">Nhập</button>
+  </div>
+</div></dialog>
+
+<!-- Dialog: xác nhận xóa -->
+<dialog id="dClr"><div class="dlg">
+  <h2>Xóa toàn bộ lịch?</h2>
+  <div class="hint">Toàn bộ lịch trên server sẽ bị xóa vĩnh viễn. Nên bấm “Xuất JSON” để sao lưu trước.</div>
+  <div class="btns">
+    <button type="button" id="bClrCancel">Hủy</button>
+    <button type="button" class="danger solid" id="bClrGo">Xóa hết</button>
+  </div>
+</div></dialog>
+
+<!-- Dialog: nhật ký truy cập -->
+<dialog id="dLog" style="width:min(820px,95vw)"><div class="dlg">
+  <h2>Nhật ký truy cập</h2>
+  <div class="row" style="align-items:flex-end">
+    <label>Tên thiết bị này<input id="devName" maxlength="40" placeholder="VD: Laptop, Điện thoại…"></label>
+    <button type="button" id="bDevSave" style="flex:0 0 auto">Lưu tên</button>
+  </div>
+  <div class="hint" id="logSum"></div>
+  <div style="overflow:auto;max-height:50vh;border:1px solid var(--line);border-radius:10px">
+    <table id="logTbl"><thead><tr><th>Thời gian</th><th>Thiết bị</th><th>Hệ điều hành / Trình duyệt</th><th>Loại</th><th>Màn hình</th><th>IP</th></tr></thead><tbody></tbody></table>
+  </div>
+  <div class="btns">
+    <button type="button" class="danger sp" id="bLogClear">Xóa nhật ký</button>
+    <button type="button" id="bLogRefresh">Làm mới</button>
+    <button type="button" class="primary" id="bLogClose">Đóng</button>
+  </div>
+</div></dialog>
+
+<!-- Dialog: cấu hình Firebase -->
+<dialog id="dCfg"><div class="dlg">
+  <h2>Kết nối Firebase</h2>
+  <div class="hint">Firebase Console → ⚙ Project settings → Your apps → Web app → copy đoạn <code>firebaseConfig</code> rồi dán vào đây. Cấu hình được lưu trong trình duyệt này.</div>
+  <textarea id="cfgText" placeholder='const firebaseConfig = { apiKey: "...", authDomain: "...", projectId: "...", ... };'></textarea>
+  <div class="row" style="align-items:flex-end;border-top:1px solid var(--line);padding-top:12px">
+    <label>Nhật ký truy cập<input type="password" id="logPw" placeholder="Nhập mật khẩu" autocomplete="off"></label>
+    <button type="button" id="bLogOpen" style="flex:0 0 auto">Mở</button>
+  </div>
+  <div class="btns">
+    <button type="button" id="bCfgCancel">Đóng</button>
+    <button type="button" class="primary" id="bCfgSave">Lưu & kết nối</button>
+  </div>
+</div></dialog>
+
+<div id="toast"></div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
+import { getFirestore, collection, onSnapshot, addDoc, setDoc, doc, deleteDoc, writeBatch, getDocs, query, orderBy, limit, serverTimestamp }
+  from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+
+/* Có thể dán cấu hình Firebase trực tiếp vào đây thay vì nhập qua giao diện */
+const EMBEDDED_CONFIG = {
+  apiKey: "AIzaSyBerjZNwba6_Ey7AyoRwYxuhMEgaqPNp-8",
+  authDomain: "flashcard-hz.firebaseapp.com",
+  projectId: "flashcard-hz",
+  storageBucket: "flashcard-hz.firebasestorage.app",
+  messagingSenderId: "783141740672",
+  appId: "1:783141740672:web:aba8d46ce20bbb0ebdc665",
+  measurementId: "G-96FWL699W5"
+};
+
+const COLL = "schedule";
+const START = 6, END = 22, H = 56;
+const DAYS = [[2,"Thứ 2"],[3,"Thứ 3"],[4,"Thứ 4"],[5,"Thứ 5"],[6,"Thứ 6"],[7,"Thứ 7"],[8,"Chủ nhật"]];
+const COLORS = ["#4f6df5","#7c5cff","#e5484d","#f08c00","#2fb344","#0ca678","#1c9ac9","#d6409f","#6b7280"];
+
+const $ = id => document.getElementById(id);
+let db = null, events = [], editingId = null, selColor = COLORS[0];
+
+/* ---------- tiện ích ---------- */
+const toMin = t => { const [h,m] = t.split(":").map(Number); return h*60+m; };
+const fmt = m => String(Math.floor(m/60)).padStart(2,"0")+":"+String(m%60).padStart(2,"0");
+function toast(msg){ const t=$("toast"); t.textContent=msg; t.classList.add("show"); clearTimeout(toast.t); toast.t=setTimeout(()=>t.classList.remove("show"),2600); }
+function setStatus(ok, text){ $("dot").className="dot "+(ok===true?"ok":ok===false?"err":""); $("stat").textContent=text; }
+function todayDay(){ const d=new Date().getDay(); return d===0?8:d+1; } // 2..8
+
+function parseDay(v){
+  if (typeof v==="number") return v>=2&&v<=8?v:null;
+  const s=String(v).trim().toLowerCase().replace(/\s+/g,"");
+  if (/^\d$/.test(s)) return parseDay(+s);
+  const map={t2:2,thu2:2,thứ2:2,mon:2,monday:2,t3:3,thu3:3,thứ3:3,tue:3,tuesday:3,t4:4,thu4:4,thứ4:4,wed:4,wednesday:4,
+    t5:5,thu5:5,thứ5:5,thu:5,thursday:5,t6:6,thu6:6,thứ6:6,fri:6,friday:6,t7:7,thu7:7,thứ7:7,sat:7,saturday:7,
+    cn:8,chunhat:8,chủnhật:8,sun:8,sunday:8};
+  return map[s]||null;
+}
+function normTime(v){
+  const m=String(v||"").trim().match(/^(\d{1,2})(?:[:hH](\d{2})?)?$/);
+  if(!m) return null;
+  const h=+m[1], mi=+(m[2]||0);
+  if(h>23||mi>59) return null;
+  return fmt(h*60+mi);
+}
+function normalize(list){
+  const ok=[], bad=[];
+  list.forEach((e,i)=>{
+    const day=parseDay(e.day), s=normTime(e.start), en=normTime(e.end);
+    const title=String(e.title||e.name||"").trim();
+    if(!title||!day||!s||!en||toMin(s)>=toMin(en)||toMin(s)<START*60||toMin(en)>END*60){ bad.push(i+1); return; }
+    ok.push({title,day,start:s,end:en,location:String(e.location||e.room||""),note:String(e.note||""),color:/^#[0-9a-f]{3,8}$/i.test(e.color||"")?e.color:COLORS[0]});
+  });
+  return {ok,bad};
+}
+
+/* ---------- vẽ lịch ---------- */
+function buildGrid(){
+  const td=todayDay();
+  $("head").innerHTML = "<div></div>"+DAYS.map(([d,n])=>`<div class="${d===td?"today":""}">${n}</div>`).join("");
+  let html = `<div class="times">`;
+  for(let h=START; h<=END; h++) html += `<span style="top:${(h-START)*H}px">${h}:00</span>`;
+  html += `</div>`;
+  DAYS.forEach(([d])=>{ html += `<div class="col ${d===td?"today":""}" data-day="${d}"></div>`; });
+  $("body").innerHTML = html;
+  document.querySelectorAll(".col").forEach(c=>{
+    c.addEventListener("click", ev=>{
+      if(ev.target!==c) return;
+      const y=ev.offsetY, mins=Math.floor((y/H*60+START*60)/30)*30;
+      openEvent(null,{day:+c.dataset.day,start:fmt(mins),end:fmt(Math.min(mins+60,END*60))});
+    });
+  });
+}
+function render(){
+  document.querySelectorAll(".col").forEach(c=>c.innerHTML="");
+  $("empty").hidden = events.length>0;
+  DAYS.forEach(([d])=>{
+    const col=document.querySelector(`.col[data-day="${d}"]`);
+    const list=events.filter(e=>e.day===d).sort((a,b)=>toMin(a.start)-toMin(b.start)||toMin(a.end)-toMin(b.end));
+    // chia làn cho các lịch trùng giờ
+    let cluster=[], clusterEnd=0;
+    const flush=()=>{
+      const lanes=[];
+      cluster.forEach(e=>{
+        let l=lanes.findIndex(end=>end<=toMin(e.start));
+        if(l<0){ l=lanes.length; lanes.push(0); }
+        lanes[l]=toMin(e.end); e._lane=l;
+      });
+      cluster.forEach(e=>e._lanes=lanes.length);
+      cluster=[];
+    };
+    list.forEach(e=>{
+      if(cluster.length && toMin(e.start)>=clusterEnd) flush();
+      cluster.push(e); clusterEnd=Math.max(clusterEnd, toMin(e.end));
+      if(cluster.length===1) clusterEnd=toMin(e.end);
+    });
+    flush();
+    list.forEach(e=>{
+      const top=(toMin(e.start)-START*60)/60*H, h=(toMin(e.end)-toMin(e.start))/60*H;
+      const w=100/e._lanes;
+      const el=document.createElement("div");
+      el.className="ev";
+      el.style.cssText=`top:${top+1}px;height:${h-2}px;left:calc(${e._lane*w}% + 2px);width:calc(${w}% - 4px);background:${e.color}`;
+      el.innerHTML=`<b></b><div class="t"></div>`;
+      el.querySelector("b").textContent=e.title;
+      el.querySelector(".t").textContent=`${e.start}–${e.end}${e.location?" · "+e.location:""}`;
+      el.title=[e.title,`${e.start}–${e.end}`,e.location,e.note].filter(Boolean).join("\n");
+      el.addEventListener("click",ev=>{ev.stopPropagation();openEvent(e);});
+      col.appendChild(el);
+    });
+  });
+  drawNow();
+}
+function drawNow(){
+  document.querySelectorAll(".now").forEach(n=>n.remove());
+  const n=new Date(), m=n.getHours()*60+n.getMinutes();
+  if(m<START*60||m>END*60) return;
+  const col=document.querySelector(`.col[data-day="${todayDay()}"]`);
+  if(!col) return;
+  const l=document.createElement("div"); l.className="now"; l.style.top=((m-START*60)/60*H)+"px"; col.appendChild(l);
+}
+setInterval(drawNow,60000);
+
+/* ---------- thêm / sửa / xóa 1 lịch ---------- */
+$("fDay").innerHTML=DAYS.map(([d,n])=>`<option value="${d}">${n}</option>`).join("");
+$("swatches").innerHTML=COLORS.map(c=>`<button type="button" class="sw" data-c="${c}" style="background:${c}"></button>`).join("");
+$("swatches").addEventListener("click",e=>{ const b=e.target.closest(".sw"); if(b) pickColor(b.dataset.c); });
+function pickColor(c){ selColor=c; document.querySelectorAll(".sw").forEach(s=>s.classList.toggle("sel",s.dataset.c===c)); }
+
+function requireDb(){ if(!db){ toast("Chưa kết nối Firebase"); $("dCfg").showModal(); return false;} return true; }
+function openEvent(e, preset){
+  if(!requireDb()) return;
+  editingId = e ? e.id : null;
+  $("evTitle").textContent = e ? "Sửa lịch" : "Thêm lịch";
+  $("bDel").hidden = !e;
+  const v = e || preset || {day:todayDay(),start:"07:00",end:"08:00"};
+  $("fTitle").value=e?e.title:""; $("fDay").value=v.day; $("fStart").value=v.start; $("fEnd").value=v.end;
+  $("fLoc").value=e?e.location:""; $("fNote").value=e?e.note:"";
+  pickColor(e?e.color:COLORS[0]);
+  $("dEv").showModal(); $("fTitle").focus();
+}
+$("bAdd").onclick=()=>openEvent(null);
+$("bEvCancel").onclick=()=>$("dEv").close();
+$("fEv").addEventListener("submit",async ev=>{
+  ev.preventDefault();
+  const data={title:$("fTitle").value.trim(),day:+$("fDay").value,start:$("fStart").value,end:$("fEnd").value,
+    location:$("fLoc").value.trim(),note:$("fNote").value.trim(),color:selColor};
+  const {ok}=normalize([data]);
+  if(!ok.length){ toast("Giờ không hợp lệ (06:00–22:00, bắt đầu < kết thúc)"); return; }
+  try{
+    if(editingId) await setDoc(doc(db,COLL,editingId),ok[0]); else await addDoc(collection(db,COLL),ok[0]);
+    $("dEv").close(); toast("Đã lưu");
+  }catch(err){ console.error(err); toast("Lỗi lưu: "+err.code); }
+});
+$("bDel").onclick=async()=>{
+  if(!editingId) return;
+  try{ await deleteDoc(doc(db,COLL,editingId)); $("dEv").close(); toast("Đã xóa"); }
+  catch(err){ toast("Lỗi xóa: "+err.code); }
+};
+
+/* ---------- nhập / xuất / xóa toàn bộ ---------- */
+async function chunked(ops){ // mỗi batch tối đa 500 thao tác
+  for(let i=0;i<ops.length;i+=450){
+    const b=writeBatch(db); ops.slice(i,i+450).forEach(f=>f(b)); await b.commit();
+  }
+}
+$("bImport").onclick=()=>{ if(requireDb()){ $("fText").value=""; $("fFile").value=""; $("dImp").showModal(); } };
+$("bImpCancel").onclick=()=>$("dImp").close();
+$("fFile").onchange=async e=>{ const f=e.target.files[0]; if(f) $("fText").value=await f.text(); };
+$("bImpGo").onclick=async()=>{
+  let data;
+  try{ data=JSON.parse($("fText").value); }catch{ toast("JSON không hợp lệ"); return; }
+  const list=Array.isArray(data)?data:(data.events||data.schedule||[]);
+  if(!Array.isArray(list)||!list.length){ toast("Không tìm thấy danh sách lịch"); return; }
+  const {ok,bad}=normalize(list);
+  if(!ok.length){ toast("Không có dòng nào hợp lệ"); return; }
+  const replace=document.querySelector('input[name=mode]:checked').value==="replace";
+  try{
+    const ops=[];
+    if(replace) events.forEach(e=>ops.push(b=>b.delete(doc(db,COLL,e.id))));
+    ok.forEach(e=>ops.push(b=>b.set(doc(collection(db,COLL)),e)));
+    await chunked(ops);
+    $("dImp").close();
+    toast(`Đã nhập ${ok.length} lịch`+(bad.length?` · bỏ qua dòng ${bad.join(", ")}`:""));
+  }catch(err){ console.error(err); toast("Lỗi nhập: "+err.code); }
+};
+$("bExport").onclick=()=>{
+  const out={events:events.map(({title,day,start,end,location,note,color})=>({title,day,start,end,location,note,color}))};
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(new Blob([JSON.stringify(out,null,2)],{type:"application/json"}));
+  a.download="thoikhoabieu_"+new Date().toISOString().slice(0,10)+".json"; a.click();
+  URL.revokeObjectURL(a.href); toast("Đã xuất file JSON");
+};
+$("bClear").onclick=()=>{ if(requireDb()) $("dClr").showModal(); };
+$("bClrCancel").onclick=()=>$("dClr").close();
+$("bClrGo").onclick=async()=>{
+  try{
+    const snap=await getDocs(collection(db,COLL));
+    await chunked(snap.docs.map(d=>b=>b.delete(d.ref)));
+    $("dClr").close(); toast("Đã xóa toàn bộ lịch");
+  }catch(err){ toast("Lỗi xóa: "+err.code); }
+};
+
+/* ---------- Firebase ---------- */
+function parseConfig(text){
+  const cfg={}; const re=/["']?(\w+)["']?\s*:\s*["']([^"']*)["']/g; let m;
+  while((m=re.exec(text))) cfg[m[1]]=m[2];
+  return cfg.projectId&&cfg.apiKey?cfg:null;
+}
+let unsub=null;
+function connect(cfg){
+  try{
+    if(unsub) unsub();
+    db=getFirestore(initializeApp(cfg));
+    setStatus(null,"Đang kết nối…");
+    unsub=onSnapshot(collection(db,COLL),snap=>{
+      events=snap.docs.map(d=>({id:d.id,...d.data()}));
+      render(); setStatus(true,"Đã đồng bộ"+(snap.metadata.fromCache?" (cache)":""));
+      logAccess();
+    },err=>{
+      console.error(err);
+      setStatus(false, err.code==="permission-denied"?"Bị chặn bởi Firestore Rules":"Lỗi kết nối");
+    });
+  }catch(err){ console.error(err); setStatus(false,"Cấu hình sai"); }
+}
+$("bCfg").onclick=()=>{ $("cfgText").value=localStorage.getItem("tkb_cfg_raw")||""; $("dCfg").showModal(); };
+$("bCfgCancel").onclick=()=>{ $("logPw").value=""; $("dCfg").close(); };
+$("bCfgSave").onclick=()=>{
+  const raw=$("cfgText").value, cfg=parseConfig(raw);
+  if(!cfg){ toast("Không đọc được cấu hình (cần apiKey, projectId…)"); return; }
+  localStorage.setItem("tkb_cfg_raw",raw); localStorage.setItem("tkb_cfg",JSON.stringify(cfg));
+  $("dCfg").close(); connect(cfg);
+};
+document.querySelectorAll("dialog").forEach(d=>d.addEventListener("click",e=>{ if(e.target===d) d.close(); }));
+
+/* ---------- nhật ký truy cập ---------- */
+const LOG = "access_log";
+function deviceId(){
+  let id=localStorage.getItem("tkb_device_id");
+  if(!id){ id=(crypto.randomUUID?crypto.randomUUID():Date.now()+"-"+Math.random().toString(36).slice(2)); localStorage.setItem("tkb_device_id",id); }
+  return id;
+}
+function parseUA(){
+  const ua=navigator.userAgent;
+  let os="Không rõ";
+  if(/Windows NT/.test(ua)) os="Windows";
+  else if(/Android/.test(ua)) os="Android";
+  else if(/iPhone|iPad|iPod/.test(ua)) os="iOS";
+  else if(/Mac OS X/.test(ua)) os=(navigator.maxTouchPoints>1?"iPadOS":"macOS");
+  else if(/CrOS/.test(ua)) os="ChromeOS";
+  else if(/Linux/.test(ua)) os="Linux";
+  let br="Không rõ";
+  if(/Edg\//.test(ua)) br="Edge"; else if(/OPR\//.test(ua)) br="Opera";
+  else if(/Firefox\//.test(ua)) br="Firefox"; else if(/Chrome\//.test(ua)) br="Chrome";
+  else if(/Safari\//.test(ua)) br="Safari";
+  let type="Máy tính";
+  if(/iPad|Tablet/.test(ua)||(os==="iPadOS")) type="Máy tính bảng";
+  else if(/Mobi|Android|iPhone/.test(ua)) type="Điện thoại";
+  return {os,browser:br,type};
+}
+async function getIP(){
+  try{
+    const c=new AbortController(); const t=setTimeout(()=>c.abort(),3000);
+    const r=await fetch("https://api.ipify.org?format=json",{signal:c.signal}); clearTimeout(t);
+    return (await r.json()).ip||"";
+  }catch{ return ""; }
+}
+async function logAccess(){
+  if(!db||sessionStorage.getItem("tkb_logged")) return;
+  sessionStorage.setItem("tkb_logged","1");
+  try{
+    const u=parseUA();
+    await addDoc(collection(db,LOG),{
+      time:serverTimestamp(), deviceId:deviceId(), deviceName:localStorage.getItem("tkb_device_name")||"",
+      os:u.os, browser:u.browser, type:u.type,
+      screen:`${screen.width}x${screen.height}`, lang:navigator.language, tz:Intl.DateTimeFormat().resolvedOptions().timeZone,
+      ip:await getIP(), ua:navigator.userAgent
+    });
+  }catch(err){ console.error("log",err); }
+}
+async function showLog(){
+  if(!requireDb()) return;
+  $("devName").value=localStorage.getItem("tkb_device_name")||"";
+  const tb=document.querySelector("#logTbl tbody"); tb.innerHTML="";
+  $("logSum").textContent="Đang tải…";
+  if(!$("dLog").open) $("dLog").showModal();
+  try{
+    const snap=await getDocs(query(collection(db,LOG),orderBy("time","desc"),limit(200)));
+    const me=deviceId(), ids=new Set();
+    snap.docs.forEach(d=>{
+      const x=d.data(); ids.add(x.deviceId);
+      const tr=document.createElement("tr"); if(x.deviceId===me) tr.className="me";
+      const t=x.time?x.time.toDate().toLocaleString("vi-VN"):"…";
+      const name=(x.deviceName||"(chưa đặt tên)")+(x.deviceId===me?" ← bạn đang dùng":"");
+      [t,name,`${x.os} · ${x.browser}`,x.type,x.screen||"",x.ip||"—"].forEach(v=>{
+        const td=document.createElement("td"); td.textContent=v; if(v===t) td.title=x.ua||""; tr.appendChild(td);
+      });
+      tb.appendChild(tr);
+    });
+    $("logSum").textContent=snap.size?`${snap.size} lượt truy cập gần nhất · ${ids.size} thiết bị khác nhau (mỗi trình duyệt tính là một thiết bị). Di chuột vào cột thời gian để xem chuỗi User-Agent đầy đủ.`:"Chưa có lượt truy cập nào được ghi.";
+  }catch(err){ console.error(err); $("logSum").textContent="Lỗi tải nhật ký: "+err.code+" (kiểm tra Firestore Rules cho collection access_log)"; }
+}
+function openLogWithPw(){
+  if($("logPw").value==="123"){ $("logPw").value=""; $("dCfg").close(); showLog(); }
+  else { toast("Sai mật khẩu"); $("logPw").select(); }
+}
+$("bLogOpen").onclick=openLogWithPw;
+$("logPw").addEventListener("keydown",e=>{ if(e.key==="Enter"){ e.preventDefault(); openLogWithPw(); } });
+$("bLogRefresh").onclick=showLog;
+$("bLogClose").onclick=()=>$("dLog").close();
+$("bDevSave").onclick=()=>{ localStorage.setItem("tkb_device_name",$("devName").value.trim()); toast("Đã lưu tên (áp dụng từ lần truy cập sau)"); };
+$("bLogClear").onclick=async()=>{
+  if(!confirm("Xóa toàn bộ nhật ký truy cập?")) return;
+  try{
+    const snap=await getDocs(collection(db,LOG));
+    await chunked(snap.docs.map(d=>b=>b.delete(d.ref)));
+    toast("Đã xóa nhật ký"); showLog();
+  }catch(err){ toast("Lỗi xóa: "+err.code); }
+};
+
+/* ---------- khởi động ---------- */
+buildGrid(); render();
+let cfg=EMBEDDED_CONFIG;
+if(!cfg){ try{ cfg=JSON.parse(localStorage.getItem("tkb_cfg")||"null"); }catch{} }
+if(cfg) connect(cfg); else { setStatus(false,"Chưa cấu hình Firebase"); $("dCfg").showModal(); }
+</script>
+</body>
+</html>
